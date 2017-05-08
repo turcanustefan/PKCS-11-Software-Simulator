@@ -18,6 +18,7 @@ int main()
 	p->C_OpenSession(freeSlots[0], CKF_RW_SESSION | CKF_SERIAL_SESSION, NULL, NULL, &hSession);
 	char p11PinCode[] = "1234567890";
 	p->C_Login(hSession, CKU_USER, (CK_CHAR_PTR)p11PinCode, (CK_ULONG)strlen(p11PinCode));
+	/* C_GenerateKey */
 	Token* token = new Token(0);
 	CK_OBJECT_HANDLE obj;
 	CK_MECHANISM mec = { CKM_AES_KEY_GEN, NULL, 0 };

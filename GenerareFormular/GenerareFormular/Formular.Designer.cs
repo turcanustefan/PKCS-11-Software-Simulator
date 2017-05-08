@@ -43,7 +43,7 @@
             // 
             this.locationCount.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.locationCount.FormattingEnabled = true;
-            this.locationCount.Location = new System.Drawing.Point(80, 115);
+            this.locationCount.Location = new System.Drawing.Point(159, 118);
             this.locationCount.Name = "locationCount";
             this.locationCount.Size = new System.Drawing.Size(121, 24);
             this.locationCount.TabIndex = 2;
@@ -52,7 +52,7 @@
             // 
             this.valueCount.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.valueCount.FormattingEnabled = true;
-            this.valueCount.Location = new System.Drawing.Point(261, 115);
+            this.valueCount.Location = new System.Drawing.Point(471, 118);
             this.valueCount.Name = "valueCount";
             this.valueCount.Size = new System.Drawing.Size(121, 24);
             this.valueCount.TabIndex = 3;
@@ -62,42 +62,42 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(8, 118);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(66, 17);
+            this.label1.Size = new System.Drawing.Size(143, 17);
             this.label1.TabIndex = 1;
-            this.label1.Text = "Location:";
+            this.label1.Text = "Number of Locations:";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(207, 118);
+            this.label2.Location = new System.Drawing.Point(340, 121);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(48, 17);
+            this.label2.Size = new System.Drawing.Size(125, 17);
             this.label2.TabIndex = 2;
-            this.label2.Text = "Value:";
+            this.label2.Text = "Number of Values:";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(211, 67);
+            this.label3.Location = new System.Drawing.Point(343, 67);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(44, 17);
+            this.label3.Size = new System.Drawing.Size(80, 17);
             this.label3.TabIndex = 1;
-            this.label3.Text = "Type:";
+            this.label3.Text = "Form Type:";
             // 
             // typeCount
             // 
             this.typeCount.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.typeCount.FormattingEnabled = true;
-            this.typeCount.Location = new System.Drawing.Point(261, 64);
+            this.typeCount.Location = new System.Drawing.Point(471, 64);
             this.typeCount.Name = "typeCount";
             this.typeCount.Size = new System.Drawing.Size(121, 24);
             this.typeCount.TabIndex = 1;
             // 
             // formGenerateButton
             // 
-            this.formGenerateButton.Location = new System.Drawing.Point(135, 175);
+            this.formGenerateButton.Location = new System.Drawing.Point(261, 202);
             this.formGenerateButton.Name = "formGenerateButton";
-            this.formGenerateButton.Size = new System.Drawing.Size(145, 45);
+            this.formGenerateButton.Size = new System.Drawing.Size(162, 45);
             this.formGenerateButton.TabIndex = 4;
             this.formGenerateButton.Text = "Generate Forms";
             this.formGenerateButton.UseVisualStyleBackColor = true;
@@ -105,7 +105,7 @@
             // 
             // formCount
             // 
-            this.formCount.Location = new System.Drawing.Point(80, 64);
+            this.formCount.Location = new System.Drawing.Point(159, 67);
             this.formCount.Name = "formCount";
             this.formCount.Size = new System.Drawing.Size(121, 22);
             this.formCount.TabIndex = 0;
@@ -115,16 +115,16 @@
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(8, 67);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(51, 17);
+            this.label4.Size = new System.Drawing.Size(121, 17);
             this.label4.TabIndex = 1;
-            this.label4.Text = "Forms:";
+            this.label4.Text = "Number of Forms:";
             // 
             // Formular
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(397, 249);
+            this.ClientSize = new System.Drawing.Size(665, 291);
             this.Controls.Add(this.formCount);
             this.Controls.Add(this.formGenerateButton);
             this.Controls.Add(this.label2);

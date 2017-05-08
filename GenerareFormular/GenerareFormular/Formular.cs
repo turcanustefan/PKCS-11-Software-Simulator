@@ -27,7 +27,7 @@ namespace GenerareFormular
         static int FormCounter=0;
         int height = 1200;
         int width = 1800;
-        int fontSize = 14;
+        int fontSize = 16;
         int qrSize = 120;
         string fontType = "Times New Roman";
         int circleSize = 30;
@@ -45,15 +45,17 @@ namespace GenerareFormular
         int typeTextY;
         int locationRectSizeX;
         int locationRectSizeY;
+        int typeRectSizeX;
+        int typeRectSizeY;
 
         // Initialise ---------------------------------------------------------
         public void Initialise()
         {
             for (int i=1;i<=4;i++)
                 typeCount.Items.Add(i.ToString());
-            for (int i = 1; i <= 10; i++)
+            for (int i = 1; i <= 9; i++)
                 locationCount.Items.Add(i);
-            for (int i = 10; i <= 100; i+=10)
+            for (int i = 10; i <= 150; i+=10)
                 valueCount.Items.Add(i);
 
             typeCount.SelectedIndex = 0;
@@ -64,11 +66,11 @@ namespace GenerareFormular
         // Printing -----------------------------------------------------------
 
         // Drawing ------------------------------------------------------------
-        public void DrawString(Bitmap bmp, float x, float y, string drawString, string fontType, int size)
+        public void DrawString(Bitmap bmp, float x, float y, string drawString, string fontType, int size, System.Drawing.Color color)
         {
             System.Drawing.Graphics formGraphics = Graphics.FromImage(bmp);
             System.Drawing.Font drawFont = new System.Drawing.Font(fontType, size, FontStyle.Regular);
-            System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
+            System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(color);
             System.Drawing.StringFormat drawFormat = new System.Drawing.StringFormat();
             formGraphics.DrawString(drawString, drawFont, drawBrush, x, y, drawFormat);
             drawFont.Dispose();
@@ -82,14 +84,19 @@ namespace GenerareFormular
             formGraphics.DrawRectangle(pen, x, y, width, height);
             formGraphics.Dispose();
         }
-        public void DrawCircle(Bitmap bmp, float x, float y, int size, int circleSize)
+        public void DrawCircle(Bitmap bmp, float x, float y, int size, int circleSize, bool fill)
         {
             Pen pen = new Pen(Color.Black, size);
+            System.Drawing.SolidBrush myBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
             System.Drawing.Graphics formGraphics = Graphics.FromImage(bmp);
             formGraphics.DrawEllipse(pen, x, y, circleSize, circleSize);
+            if(fill == true)
+            {
+                formGraphics.FillEllipse(myBrush, new RectangleF(x, y, circleSize, circleSize));
+            }
             formGraphics.Dispose();
         }
-        public void DrawForms(Bitmap bmp, int x_coord, int y_coord, string qrText, int locationCircles, int valueCircles)
+        public void DrawForms(Bitmap bmp, int x_coord, int y_coord, string qrText, int typeCircles, int locationCircles, int valueCircles, int typeValue)
         {
             int initX = x_coord;
             int initY = y_coord;
@@ -101,22 +108,22 @@ namespace GenerareFormular
 
             // Valoare inregistrare
             DrawRect(bmp, x_coord, y_coord - 60, valueRectSizeX, valueTextY, 1);
-            DrawString(bmp, x_coord + 70, y_coord - 45, "VALOARE ÎNREGISTRARE", fontType, 14);
-            DrawRect(bmp, x_coord, y_coord, valueRectSizeX, valueRectSizeY, 2);
+            DrawString(bmp, x_coord + 70, y_coord - 45, "VALOARE ÎNREGISTRARE", fontType, 14, Color.Black);
+            DrawRect(bmp, x_coord,y_coord, valueRectSizeX, valueRectSizeY, 2);
             int nr = 1;
             for (int i = 0; i < valueCircles/10; i++)
             {
                 for (int j = 0; j < circlePerRow; j++)
                 {
-                    DrawCircle(bmp, x_coord + 5, y_coord + circleYDist, circlePen, circleSize);
+                    DrawCircle(bmp, x_coord + 5, y_coord + circleYDist, circlePen, circleSize, false);
                     if (nr < 10)
-                        DrawString(bmp, x_coord + 12, y_coord + 20, nr.ToString(), fontType, fontSize);
+                        DrawString(bmp, x_coord + 11, y_coord + 20, nr.ToString(), fontType, fontSize, Color.Black);
                     else
                     {
                         if (nr < 100)
-                            DrawString(bmp, x_coord + 8, y_coord + 20, nr.ToString(), fontType, fontSize);
+                            DrawString(bmp, x_coord + 6, y_coord + 20, nr.ToString(), fontType, fontSize, Color.Black);
                         else
-                            DrawString(bmp, x_coord + 2, y_coord + 20, nr.ToString(), fontType, fontSize);
+                            DrawString(bmp, x_coord , y_coord + 20, nr.ToString(), fontType, fontSize, Color.Black);
                     }
                     nr++;
                     x_coord += circleXDist + circleSize;
@@ -125,22 +132,38 @@ namespace GenerareFormular
                 y_coord += 45;
             }
             y_coord -= 45 * valueCircles / 10;
-            int x = x_coord - valueRectSizeX - 20, y = y_coord + 10 + typeTextY;
-            // Locatie Text + Box
-            DrawRect(bmp, x, y - 60, locationRectSizeX, locationTextY, 1);
-            DrawString(bmp, x + 120, y - 45, "NUMĂR LOCAȚIE", fontType, 14);
-            // Locatie Value Box
-            DrawRect(bmp, x, y, locationRectSizeX, locationRectSizeY, 2);
+            int x = x_coord - valueRectSizeX - 20, y = y_coord + 20 + typeTextY /*+ typeRectSizeY*/;
+            
             // Tip Formular
-            DrawRect(bmp, x, y - 150, typeTextX, typeTextY, 1);
-            DrawString(bmp, x + 75, y - 120, "TIP FORMULAR", fontType, 14);
+            DrawRect(bmp, x, y - 160 /*- typeRectSizeY*/, typeTextX, typeTextY, 1);
+            DrawString(bmp, x + 75, y - 130 /*- typeRectSizeY*/, "TIP FORMULAR", fontType, 14, System.Drawing.Color.Black);
+            //// Tip formular Value Box
+            //DrawRect(bmp, x , y_coord + 30, typeRectSizeX, typeRectSizeY, 2);
+            //for(int i = 0; i < typeCircles; i++)
+            //{
+            //    if (typeValue == i)
+            //    {
+            //        DrawCircle(bmp, x + 5, y_coord + 45 + i * (circleSize + circleYDist ), circlePen, circleSize, true);
+            //        DrawString(bmp, x + 13, y_coord + 45 + i * (circleSize + circleYDist ) + 4, i.ToString(), fontType, fontSize, Color.White);
+            //    }
+            //    else
+            //    {
+            //        DrawCircle(bmp, x + 5, y_coord + 45 + i * (circleSize + circleYDist ), circlePen, circleSize, false);
+            //        DrawString(bmp, x + 13, y_coord + 45 + i * (circleSize + circleYDist ) + 4, i.ToString(), fontType, fontSize, Color.Black);
+            //    }
+            //}
 
+            // Locatie Text + Box
+            DrawRect(bmp, x, y - 70, locationRectSizeX, locationTextY, 1);
+            DrawString(bmp, x + 120, y - 55, "NUMĂR LOCAȚIE", fontType, 14, Color.Black);
+            // Locatie Value Box
+            DrawRect(bmp, x, y - 10, locationRectSizeX, locationRectSizeY, 2);
             for (int i = 0; i < locationCircles; i++)
             {
                 for (int j = 0; j < circlePerRow; j++)
                 {
-                    DrawCircle(bmp, x + 5, y + 15, circlePen, circleSize);
-                    DrawString(bmp, x + 12, y + 19, j.ToString(), fontType, fontSize);
+                    DrawCircle(bmp, x + 5, y + 5, circlePen, circleSize, false);
+                    DrawString(bmp, x + 12, y + 9, j.ToString(), fontType, fontSize, Color.Black);
                     x += circleXDist + circleSize;
                 }
                 x -= (circleXDist + circleSize) * circlePerRow;
@@ -174,6 +197,9 @@ namespace GenerareFormular
             valueRectSizeX = circleXDist * (circlePerRow) + (circlePerRow * circleSize);
             valueRectSizeY = circleYDist * (value / circlePerRow + 1) + (value / circlePerRow * circleSize);
 
+            typeRectSizeX = locationRectSizeX;
+            typeRectSizeY = (circleYDist) * (type + 1) + (type * circleSize);
+
             int locationTextX = locationRectSizeX;
             int valueTextX = valueRectSizeX;
             typeTextX = valueRectSizeX - qrSize + 16;
@@ -196,13 +222,13 @@ namespace GenerareFormular
             bmp = new Bitmap(resultImage);
 
             // Draw Forms
-            DrawForms(bmp, x_coord, y_coord, type.ToString() + '-' + FormCounter.ToString(), location, value);
+            DrawForms(bmp, x_coord, y_coord, type.ToString() + '-' + FormCounter.ToString(), type, location, value, 0);
             FormCounter++;
-            DrawForms(bmp, x_coord + x_dim, y_coord, type.ToString() + '-' + FormCounter.ToString(), location, value);
+            DrawForms(bmp, x_coord + x_dim, y_coord, type.ToString() + '-' + FormCounter.ToString(), type, location, value, 1);
             FormCounter++;
-            DrawForms(bmp, x_coord, y_coord + y_dim, type.ToString() + '-' + FormCounter.ToString(), location, value);
+            DrawForms(bmp, x_coord, y_coord + y_dim, type.ToString() + '-' + FormCounter.ToString(), type, location, value, 2);
             FormCounter++;
-            DrawForms(bmp, x_coord + x_dim, y_coord + y_dim, type.ToString() + '-' + FormCounter.ToString(), location, value);
+            DrawForms(bmp, x_coord + x_dim, y_coord + y_dim, type.ToString() + '-' + FormCounter.ToString(), type, location, value, 3);
             FormCounter++;
 
             // Draw Middle Lines

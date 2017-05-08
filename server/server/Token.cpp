@@ -48,7 +48,7 @@ Token::Token(CK_ULONG ID)
 	char *sql;
 	const char* data = "Callback function called";
 	/* Open database */
-	rc = sqlite3_open("database.db", &pDatabase);
+	rc = sqlite3_open("db.sqlite", &pDatabase);
 	if (rc) {
 		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(pDatabase));
 		exit(0);
@@ -87,8 +87,8 @@ Token::Token(CK_ULONG ID)
 		"[UNWRAP] BOOLEAN," \
 		"[MODULUS_BITS] DOUBLE," \
 		"[PUBLIC_EXPONENT] DOUBLE," \
+		"[KEY_TYPE] DOUBLE NOT NULL," \
 		"FOREIGN KEY(KeyID) REFERENCES Keys(ID))";
-
 	/* Execute SQL statement */
 	rc = sqlite3_exec(pDatabase, sql, callback, (void*)data, &zErrMsg);
 	if (rc != SQLITE_OK) {
@@ -117,7 +117,7 @@ CK_RV Token::C_InsertKey(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate
 	CK_ULONG id = 0, modulusBits = 0, publicExponent = 0;
 	char* label = "";
 	CK_BBOOL token, privat, sensitive, encrypt, decrypt, sign, verify, wrap, unwrap;
-	CK_ATTRIBUTE attrib = { CKA_ID, &id, sizeof(id) };
+	
 	token = CK_FALSE;
 	privat = CK_FALSE;
 	sensitive = CK_FALSE;
@@ -177,46 +177,46 @@ CK_RV Token::C_InsertKey(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate
 	/* Generate Key */
 	char *zErrMsg = 0;
 	char *sql = "INSERT INTO Keys(ID, [Token ID], [Key Object], [Key Length])"\
-		"VALUES(? , ? , ? , ? )";
+		"VALUES(? , ? , ? , ?)";
 	sqlite3_stmt *stmt = 0;
 	const char* data = "Callback function called";
 	srand(time(NULL));
 	int rc;
 	unsigned long err;
 	int keyHandler = rand() % RAND_MAX;
-	
+	double keyType = 0;
 	switch (pMechanism->mechanism)
 	{
 	case CKM_DES3_KEY_GEN:
+		keyType = CKK_DES3;
 	case CKM_AES_KEY_GEN:
 	{
+		keyType = CKK_AES;
 		CK_BYTE CK_PTR key;
 		int keylen = 128;
 		key = new CK_BYTE[keylen / sizeof(CK_BYTE)];
 		rc = RAND_bytes(key, sizeof(key));
 		err = ERR_get_error();
-
-		if (rc != 1) {
-			/* RAND_bytes failed */
-			/* `err` is valid    */
-		}
 		/* Database Insert Key */
 
 		sqlite3_prepare_v2(pDatabase, sql, strlen(sql) + 1, &stmt, NULL);
 		if (stmt != NULL) {
-			sqlite3_bind_int(stmt, 1, keyHandler);
-			sqlite3_bind_int(stmt, 2, tokenID);
+			sqlite3_bind_double(stmt, 1, keyHandler);
+			sqlite3_bind_double(stmt, 2, tokenID);
 			sqlite3_bind_blob(stmt, 3, key, keylen, SQLITE_TRANSIENT);
-			sqlite3_bind_int(stmt, 4, keylen);
+			sqlite3_bind_double(stmt, 4, keylen);
 		}
 
 		if (sqlite3_step(stmt) != SQLITE_DONE)
 			printf("Error message: %s\n", sqlite3_errmsg(pDatabase));
 		sqlite3_finalize(stmt);
+		delete key;
+		key = NULL;
 		break;
 	}
 	case CKM_RSA_PKCS_KEY_PAIR_GEN:
 	{
+		keyType = CKK_RSA;
 		const int kBits = 1024;
 		unsigned char* pemKey,*pubKey;
 		const int kExp = 3;
@@ -252,11 +252,11 @@ CK_RV Token::C_InsertKey(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate
 	/* Insert Key Attributes */
 	char *sqlAtt = "INSERT INTO Attributes(KeyID, ID, LABEL, TOKEN, PRIVATE," \
 		"SENSITIVE, ENCRYPT, DECRYPT, SIGN, VERIFY, WRAP, UNWRAP," \
-		"MODULUS_BITS, PUBLIC_EXPONENT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		"MODULUS_BITS, PUBLIC_EXPONENT, KEY_TYPE) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 	sqlite3_prepare_v2(pDatabase, sqlAtt, strlen(sqlAtt) + 1, &stmt, NULL);
 	if (stmt != NULL) {
-		sqlite3_bind_int(stmt, 1, keyHandler);
+		sqlite3_bind_double(stmt, 1, keyHandler);
 		sqlite3_bind_double(stmt, 2, id);
 		sqlite3_bind_text(stmt, 3, label,-1,NULL);
 		sqlite3_bind_int(stmt, 4, token);
@@ -268,8 +268,112 @@ CK_RV Token::C_InsertKey(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate
 		sqlite3_bind_int(stmt, 10, verify);
 		sqlite3_bind_int(stmt, 11, wrap);
 		sqlite3_bind_int(stmt, 12, unwrap);
-		sqlite3_bind_int(stmt, 13, modulusBits);
-		sqlite3_bind_int(stmt, 14, publicExponent);
+		sqlite3_bind_double(stmt, 13, modulusBits);
+		sqlite3_bind_double(stmt, 14, publicExponent);
+		sqlite3_bind_double(stmt, 15, keyType);
+	}
+
+	if (sqlite3_step(stmt) != SQLITE_DONE)
+		printf("Error message: %s\n", sqlite3_errmsg(pDatabase));
+	sqlite3_finalize(stmt);
+	return CKR_OK;
+}
+
+CK_RV Token::C_FindObjectsInit(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
+{
+	CK_ULONG id = 0, modulusBits = 0, publicExponent = 0;
+	char* label = "";
+	CK_BBOOL token, privat, sensitive, encrypt, decrypt, sign, verify, wrap, unwrap;
+	double keyType;
+	token = CK_FALSE;
+	privat = CK_FALSE;
+	sensitive = CK_FALSE;
+	encrypt = CK_FALSE;
+	decrypt = CK_FALSE;
+	sign = CK_FALSE;
+	verify = CK_FALSE;
+	wrap = CK_FALSE;
+	unwrap = CK_FALSE;
+	for (int i = 0; i < ulCount; i++)
+	{
+		switch (pTemplate[i].type)
+		{
+		case CKA_ID:
+			id = *(CK_ULONG*)(pTemplate[i].pValue);
+			break;
+		case CKA_LABEL:
+			label = (char*)pTemplate[i].pValue;
+			break;
+		case CKA_KEY_TYPE:
+			keyType = pTemplate[i].pValue;
+		case CKA_TOKEN:
+			token = CK_TRUE;
+			break;
+		case CKA_PRIVATE:
+			privat = CK_TRUE;
+			break;
+		case CKA_SENSITIVE:
+			sensitive = CK_TRUE;
+			break;
+		case CKA_ENCRYPT:
+			encrypt = CK_TRUE;
+			break;
+		case CKA_DECRYPT:
+			decrypt = CK_TRUE;
+			break;
+		case CKA_SIGN:
+			sign = CK_TRUE;
+			break;
+		case CKA_VERIFY:
+			verify = CK_TRUE;
+			break;
+		case CKA_WRAP:
+			wrap = CK_TRUE;
+			break;
+		case CKA_UNWRAP:
+			unwrap = CK_TRUE;
+			break;
+		case CKA_MODULUS_BITS:
+			modulusBits = CK_TRUE;
+			break;
+		case CKA_PUBLIC_EXPONENT:
+			publicExponent = CK_TRUE;
+			break;
+		default:
+			break;
+		}
+	}
+	sqlite3_stmt *stmt = 0;
+	char *zErrMsg = 0;
+	int rc;
+	unsigned long err;
+	const char* data = "Callback function called";
+	char *sqlAtt = "SELECT * FROM Keys INNER JOIN" \
+		"Attributes ON Attributes.KeyID = Keys.ID" \
+		"WHERE Attributes.ID = ?  AND Attributes.Label = ?" \
+		"AND Attributes.TOKEN = ?" \
+		"AND Attributes.PRIVATE = ? AND Attributes.SENSITIVE = ?" \
+		"AND Attributes.ENCRYPT = ? AND Attributes.DECRYPT = ?" \
+		"AND Attributes.SIGN = ? AND Attributes.VERIFY = ?" \
+		"AND Attributes.WRAP = ? AND Attributes.UNWRAP = ?" \
+		"AND MODULUS_BITS = ? AND PUBLIC_EXPONENT = ?" \
+		"AND KEY_TYPE = ?";
+	sqlite3_prepare_v2(pDatabase, sqlAtt, strlen(sqlAtt) + 1, &stmt, NULL);
+	if (stmt != NULL) {
+		sqlite3_bind_double(stmt, 1, id);
+		sqlite3_bind_text(stmt, 2, label, -1, NULL);
+		sqlite3_bind_int(stmt, 3, token);
+		sqlite3_bind_int(stmt, 4, privat);
+		sqlite3_bind_int(stmt, 5, sensitive);
+		sqlite3_bind_int(stmt, 6, encrypt);
+		sqlite3_bind_int(stmt, 7, decrypt);
+		sqlite3_bind_int(stmt, 8, sign);
+		sqlite3_bind_int(stmt, 9, verify);
+		sqlite3_bind_int(stmt, 10, wrap);
+		sqlite3_bind_int(stmt, 11, unwrap);
+		sqlite3_bind_double(stmt, 12, modulusBits);
+		sqlite3_bind_double(stmt, 13, publicExponent);
+		sqlite3_bind_double(stmt, 14, keyType);
 	}
 
 	if (sqlite3_step(stmt) != SQLITE_DONE)

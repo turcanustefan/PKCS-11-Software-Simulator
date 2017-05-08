@@ -200,11 +200,12 @@ CK_RV ServerPKCS::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMe
 		{
 			if (pToken->C_IsMechanismAvailable(pMechanism->mechanism))
 			{
-
+				break;
 			}
 			else
 				return CKR_MECHANISM_INVALID;
 		}
+		pToken->C_InsertKey(pMechanism, pTemplate, ulCount, phKey);
 	}
 	return CKR_OK;
 }
@@ -222,4 +223,16 @@ CK_BBOOL ServerPKCS::C_VerifySession(CK_SESSION_HANDLE hSession, Session*& pSess
 		}
 		return CK_FALSE;
 	}
+}
+
+CK_RV ServerPKCS::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
+{
+	Session* pSession;
+	if (C_VerifySession(hSession, pSession))
+	{
+		Token* pToken = slotList->tokenList[pSession->sessionInfo.slotID];
+
+	}
+
+	return CKR_OK;
 }

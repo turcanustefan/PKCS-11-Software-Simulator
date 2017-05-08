@@ -14,6 +14,7 @@
 #include <openssl/engine.h>
 #include <openssl/rand.h>
 
+#define DB_NAME "db.sqlite"
 #define CKU_MAX_PIN_LEN 32
 #define CKU_MIN_PIN_LEN 10
 #define CKU_PIN_TRYOUTS 10
@@ -40,6 +41,7 @@ struct Token
 	~Token();
 
 	CK_RV C_InsertKey(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phKey);
+	CK_RV C_FindObjectsInit(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount);
 	CK_BBOOL C_IsMechanismAvailable(CK_MECHANISM_TYPE);
 	
 };
