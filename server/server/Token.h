@@ -23,6 +23,7 @@
 #define CKU_MAX_RW_SESSION_COUNT 2
 #define CKU_TOTAL_PRIVATE_MEMORY 4096
 #define CKU_TOTAL_PUBLIC_MEMORY 8192
+#define CKU_MAX_TOKEN_OBJECTS 128
 
 struct Token
 {
@@ -34,14 +35,18 @@ struct Token
 	CK_ULONG mechanismCounter;
 	CK_MECHANISM_PTR mechanismList;
 	sqlite3 *pDatabase;
+	CK_OBJECT_HANDLE_PTR objectList;
+	CK_ULONG objectCounter;
 
 	/* Constructors and Destructors */
 
 	Token(CK_ULONG tokenID);
 	~Token();
 
+	CK_RV C_InsertAttributes(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_KEY_TYPE keyType, CK_ULONG keyHandler);
 	CK_RV C_InsertKey(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phKey);
-	CK_RV C_FindObjectsInit(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount);
+	CK_RV C_InsertKeyPair(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pPublicKeyTemplate, CK_ULONG ulPublicKeyAttributeCount, CK_ATTRIBUTE_PTR pPrivateKeyTemplate, CK_ULONG ulPrivateKeyAttributeCount, CK_OBJECT_HANDLE_PTR phPublicKey, CK_OBJECT_HANDLE_PTR phPrivateKey);
+	CK_RV C_FindObjects(CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount);
 	CK_BBOOL C_IsMechanismAvailable(CK_MECHANISM_TYPE);
 	
 };

@@ -131,6 +131,7 @@ CK_RV ServerPKCS::C_OpenSession(CK_SLOT_ID slotID, CK_FLAGS flags, CK_VOID_PTR p
 				s->sessionInfo.state = CKS_RW_PUBLIC_SESSION;
 			else
 				s->sessionInfo.state = CKS_RO_PUBLIC_SESSION;
+			sessionCounter++;
 			s->sessionHandler = rand()% RAND_MAX;
 			*phSession = s->sessionHandler;
 			sessionList.push_back(s);
@@ -212,17 +213,15 @@ CK_RV ServerPKCS::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMe
 
 CK_BBOOL ServerPKCS::C_VerifySession(CK_SESSION_HANDLE hSession, Session*& pSession)
 {
+	for (CK_ULONG i = 0; i < sessionCounter; i++)
 	{
-		for (CK_ULONG i = 0; i < sessionCounter; i++)
+		if (hSession == sessionList[i]->sessionHandler)
 		{
-			if (hSession == sessionList[i]->sessionHandler)
-			{
-				pSession = sessionList[i];
-				return CK_TRUE;
-			}
+			pSession = sessionList[i];
+			return CK_TRUE;
 		}
-		return CK_FALSE;
 	}
+	return CK_FALSE;
 }
 
 CK_RV ServerPKCS::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
@@ -231,8 +230,43 @@ CK_RV ServerPKCS::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR
 	if (C_VerifySession(hSession, pSession))
 	{
 		Token* pToken = slotList->tokenList[pSession->sessionInfo.slotID];
-
+		pToken->C_FindObjects(pTemplate, ulCount);
 	}
+	else
+		return CKR_SESSION_HANDLE_INVALID;
+	return CKR_OK;
+}
 
+CK_RV ServerPKCS::C_FindObjects(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_PTR phObject, CK_ULONG ulMaxObjectCount, CK_ULONG_PTR pulObjectCount)
+{
+	Session* pSession;
+	if (C_VerifySession(hSession, pSession))
+	{
+		Token* pToken = slotList->tokenList[pSession->sessionInfo.slotID];
+		if (pToken->objectCounter > ulMaxObjectCount)
+			*pulObjectCount = ulMaxObjectCount;
+		else
+			*pulObjectCount = pToken->objectCounter;
+		for (int i = 0; i < *pulObjectCount; i++)
+		{
+			phObject[i] = pToken->objectList[i];
+		}
+	}
+	else
+		return CKR_SESSION_HANDLE_INVALID;
+	return CKR_OK;
+}
+
+CK_RV ServerPKCS::C_FindObjectsFinal(CK_SESSION_HANDLE hSession)
+{
+	Session* pSession;
+	if (C_VerifySession(hSession, pSession))
+	{
+		Token* pToken = slotList->tokenList[pSession->sessionInfo.slotID];
+		delete[] pToken->objectList;
+		pToken->objectList = NULL;
+	}
+	else
+		return CKR_SESSION_HANDLE_INVALID;
 	return CKR_OK;
 }
