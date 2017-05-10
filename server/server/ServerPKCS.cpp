@@ -278,7 +278,7 @@ CK_RV ServerPKCS::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR  pM
 	{
 		/*TODO: Get uchar key from database and length*/
 		unsigned char *encryptKey = NULL_PTR;
-		unsigned int encryptKeyLength; //in bits (128,192,256);
+		unsigned int encryptKeyLength=128; //in bits (128,192,256);
 
 		Token* pToken = slotList->tokenList[pSession->sessionInfo.slotID];
 		if (pToken->C_IsMechanismAvailable(pMechanism->mechanism))
@@ -298,15 +298,25 @@ CK_RV ServerPKCS::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR  pM
 				if (pSession->currentEncryptionKey != NULL_PTR)
 					return CKR_KEY_FUNCTION_NOT_PERMITTED;
 				//GET KEY FROM DATABASE (key)
-				CK_BYTE_PTR key; //buffer de uchar
-				RSA* rsa;
-				BIO *bio;
-				BIO *bio = BIO_new_mem_buf(key, -1);;
+				CK_BYTE_PTR key=NULL; //buffer de uchar
+				CK_ULONG size;
+				pToken->C_GetKeyByHandle(hKey, key, &size);
+				BIO *keybio;
+				keybio = BIO_new_mem_buf(key, size);
+				if (keybio == NULL)
+				{
+					printf("Failed to create key BIO");
+					return 0;
+				}
+				
+				RSA *rsa = PEM_read_bio_RSAPublicKey(keybio, NULL, NULL, NULL);
+				if (!rsa)
+					printf("ERROR: Could not load PUBLIC KEY!  PEM_read_bio_RSA_PUBKEY FAILED: %s\n", ERR_error_string(ERR_get_error(), NULL));
 
-				rsa = PEM_read_bio_RSA_PUBKEY(bio, &rsa, NULL, NULL);
 
 				pSession->currentEncryptionKey = rsa;
-				BIO_free_all(bio);
+				pSession->currentMechanismEncrypt = CKM_RSA_PKCS;
+				BIO_free_all(keybio);
 				break;
 			}
 
@@ -321,7 +331,7 @@ CK_RV ServerPKCS::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR  pM
 	}
 }
 
-CK_RV ServerPKCS::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
+CK_RV ServerPKCS::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR& pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen)
 {
 	CK_BYTE ivec[] = { 0xCE, 0x2F, 0x45, 0x9C, 0x66, 0x23, 0x3E, 0x83,
 						0x5C, 0x3A, 0x41, 0xAE, 0x05, 0x79, 0x2D, 0x99 };
@@ -368,6 +378,7 @@ CK_RV ServerPKCS::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_UL
 		}
 		case CKM_RSA_PKCS:
 		{
+			pEncryptedData = new CK_BYTE[4096];
 			*pulEncryptedDataLen = RSA_public_encrypt(ulDataLen, pData, pEncryptedData, (RSA*)(pSession->currentEncryptionKey), RSA_PKCS1_PADDING);
 			
 			RSA_free((RSA*)pSession->currentEncryptionKey);
@@ -449,7 +460,7 @@ CK_RV ServerPKCS::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pLastEn
 	return CKR_OK;
 }
 
-CK_RV ServerPKCS::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR pData, CK_ULONG_PTR pulDataLen)
+CK_RV ServerPKCS::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData, CK_ULONG ulEncryptedDataLen, CK_BYTE_PTR& pData, CK_ULONG_PTR pulDataLen)
 {
 	Session* pSession;
 	if (C_VerifySession(hSession, pSession))
@@ -461,9 +472,9 @@ CK_RV ServerPKCS::C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedDa
 		{
 			if (pSession->currentEncryptionKey == NULL_PTR)
 				return CKR_KEY_HANDLE_INVALID;
-
+			pData = new CK_BYTE[4096];
 			*pulDataLen = RSA_private_decrypt(ulEncryptedDataLen, pEncryptedData, pData, (RSA*)(pSession->currentDecryptionKey), RSA_PKCS1_PADDING);
-			RSA_free((RSA*)pSession->currentEncryptionKey);
+			RSA_free((RSA*)pSession->currentDecryptionKey);
 			break;
 		}
 		}
@@ -483,28 +494,28 @@ CK_RV ServerPKCS::C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMe
 		{
 		case CKM_RSA_PKCS:
 		{
-			if (pSession->currentEncryptionKey != NULL_PTR)
+			if (pSession->currentDecryptionKey != NULL_PTR)
 				return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
 			//GET KEY FROM DATABASE (key)
-			CK_BYTE_PTR key; //buffer de uchar
-			RSA* rsa;
-			BIO *bio;
-			BIO *bio = BIO_new_mem_buf(key, -1);
+			CK_BYTE_PTR key=NULL; //buffer de uchar
+			CK_ULONG size;
+			pToken->C_GetKeyByHandle(hKey, key, &size);
+			BIO *keybio;
+			keybio = BIO_new_mem_buf(key, size);
+			if (keybio == NULL)
+			{
+				printf("Failed to create key BIO");
+				return 0;
+			}
 
-
-			rsa = PEM_read_bio_RSA_PUBKEY(bio, &rsa, NULL, NULL);
-
+			RSA *rsa = PEM_read_bio_RSAPrivateKey(keybio, NULL, NULL, NULL);
+			if (!rsa)
+				printf("ERROR: Could not load PUBLIC KEY!  PEM_read_bio_RSA_PUBKEY FAILED: %s\n", ERR_error_string(ERR_get_error(), NULL));
 			pSession->currentDecryptionKey = rsa;
-			BIO_free_all(bio);
 			break;
 		}
-
-
-
 		}
-
-
 		return CKR_OK;
 	}
 

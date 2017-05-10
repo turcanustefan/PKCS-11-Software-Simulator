@@ -1,6 +1,6 @@
 #include "Token.h"
 
-static CK_MECHANISM_TYPE mechanismsAvailable[] = { CKM_RSA_PKCS_KEY_PAIR_GEN, CKM_DES3_KEY_GEN, CKM_AES_KEY_GEN };
+static CK_MECHANISM_TYPE mechanismsAvailable[] = { CKM_RSA_PKCS_KEY_PAIR_GEN, CKM_DES3_KEY_GEN, CKM_AES_KEY_GEN, CKM_RSA_PKCS };
 
 static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
 	int i;
@@ -298,6 +298,35 @@ CK_RV Token::C_InsertKey(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate
 	return CKR_OK;
 }
 
+CK_RV Token::C_GetKeyByHandle(CK_OBJECT_HANDLE phKey, CK_BYTE_PTR& key, CK_ULONG_PTR keySize)
+{
+	sqlite3_stmt *stmt = 0;
+	char *zErrMsg = 0;
+	int rc, size;
+	unsigned long err;
+	const char* data = "Callback function called";
+	char *sqlAtt = "SELECT Keys.[Key Object] FROM Keys INNER JOIN " \
+		"Attributes ON Attributes.KeyID = Keys.ID " \
+		"WHERE Keys.ID = ?";
+	CK_BYTE_PTR keyData = NULL;
+	sqlite3_prepare_v2(pDatabase, sqlAtt, strlen(sqlAtt) + 1, &stmt, NULL);
+	if (stmt != NULL) {
+		sqlite3_bind_double(stmt, 1, phKey);
+	}
+
+	/*while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+	{*/
+	sqlite3_step(stmt);
+	keyData = (CK_BYTE_PTR)sqlite3_column_blob(stmt, 0);
+	size = sqlite3_column_bytes(stmt, 0);
+	//}
+	*keySize = size;
+	key = new CK_BYTE[sizeof(keyData) / sizeof(CK_BYTE) * size];
+	memcpy(key, keyData, sizeof(keyData) / sizeof(CK_BYTE) * size);
+	sqlite3_finalize(stmt);
+	return CKR_OK;
+}
+
 CK_RV Token::C_InsertKeyPair(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pPublicKeyTemplate, CK_ULONG ulPublicKeyAttributeCount, CK_ATTRIBUTE_PTR pPrivateKeyTemplate, CK_ULONG ulPrivateKeyAttributeCount, CK_OBJECT_HANDLE_PTR phPublicKey, CK_OBJECT_HANDLE_PTR phPrivateKey)
 {
 	CK_KEY_TYPE keyType = -1;
@@ -311,7 +340,9 @@ CK_RV Token::C_InsertKeyPair(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pPubl
 	int rc;
 	unsigned long err;
 	CK_ULONG privateKeyHandler = rand() % RAND_MAX;
+	*phPrivateKey = privateKeyHandler;
 	CK_ULONG publicKeyHandler = rand() % RAND_MAX;
+	*phPublicKey = publicKeyHandler;
 	switch (pMechanism->mechanism)
 	{
 	case CKM_RSA_PKCS_KEY_PAIR_GEN:
@@ -328,7 +359,7 @@ CK_RV Token::C_InsertKeyPair(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pPubl
 		int keylen = BIO_pending(bio);
 		pemKey = (unsigned char*)calloc(keylen + 1, sizeof(unsigned char)); /* Null-terminate */
 		BIO_read(bio, pemKey, keylen);
-		printf("%s", pemKey);
+		//printf("%s", pemKey);
 		/* Database Insert Key */
 
 		sqlite3_prepare_v2(pDatabase, sql, strlen(sql) + 1, &stmt, NULL);
@@ -350,7 +381,7 @@ CK_RV Token::C_InsertKeyPair(CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pPubl
 
 		pubKey = (unsigned char*)calloc(keylen + 1, sizeof(unsigned char));
 		BIO_read(bio2, pubKey, keylen);
-		printf("%s", pubKey);
+		//printf("%s", pubKey);
 
 		/* Database Insert Key */
 
