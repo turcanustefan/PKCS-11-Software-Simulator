@@ -77,22 +77,22 @@ int main()
 
 	/* C_FindObjects */
 
-	CK_BYTE aesKeyID = 0xa1;
-	CK_KEY_TYPE		aesKeyType = CKK_AES;
-	CK_ATTRIBUTE	aesKeyTemplate[] =   // template-ul de cautare 
+	CK_BYTE rsaKeyID[] = { 123 };
+	CK_KEY_TYPE		rsaKeyType = CKK_RSA;
+	CK_ATTRIBUTE	rsaKeyTemplate[] =   // Searching Template
 	{
-		{ CKA_ID,		&aesKeyID,	sizeof(aesKeyID) },
-		{ CKA_KEY_TYPE,		&aesKeyType,	sizeof(aesKeyType) },
+		{ CKA_ID,		&rsaKeyID,	sizeof(rsaKeyID) },
+		{ CKA_KEY_TYPE,		&rsaKeyType,	sizeof(rsaKeyType) },
 	};
-	p->C_FindObjectsInit(hSession, aesKeyTemplate, sizeof(aesKeyTemplate) / sizeof(CK_ATTRIBUTE));
+	p->C_FindObjectsInit(hSession, rsaKeyTemplate, sizeof(rsaKeyTemplate) / sizeof(CK_ATTRIBUTE));
 
-	CK_OBJECT_HANDLE	aesKeyInfo[CKU_MAX_TOKEN_OBJECTS]; // pt rezultatele cautarii 
-	CK_ULONG			objectAesKeyFound = 0;
+	CK_OBJECT_HANDLE	rsaKeyInfo[CKU_MAX_TOKEN_OBJECTS];
+	CK_ULONG			objectRSAKeyFound = 0;
 
-	p->C_FindObjects(hSession, aesKeyInfo,
-		sizeof(aesKeyInfo) / sizeof(CK_OBJECT_HANDLE), /* numarul maxim de obiecte ce va fi gasit */
-		&objectAesKeyFound);
+	p->C_FindObjects(hSession, rsaKeyInfo,
+		sizeof(rsaKeyInfo) / sizeof(CK_OBJECT_HANDLE), /* Maximum number of objects */
+		&objectRSAKeyFound);
 	p->C_FindObjectsFinal(hSession);
-
+	
 	return CKR_OK;
 }
