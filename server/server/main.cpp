@@ -38,7 +38,9 @@ int main()
 	token->C_FindObjects(att, 3);*/
 	CK_OBJECT_HANDLE hPublicKey, hPrivateKey;
 	CK_MECHANISM mechanism = {
-		CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0
+		CKM_
+		
+		_PKCS_KEY_PAIR_GEN, NULL_PTR, 0
 	};
 
 	CK_ULONG modulusBits = 768;

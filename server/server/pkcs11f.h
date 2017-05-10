@@ -2,7 +2,8 @@
 /* $Revision: 1.4 $ */
 
 /* License to copy and use this software is granted provided that it is
- * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
+ * identified as "
+ Security Inc. PKCS #11 Cryptographic Token Interface
  * (Cryptoki)" in all material mentioning or referencing this software.
 
  * License is also granted to make and use derivative works provided that

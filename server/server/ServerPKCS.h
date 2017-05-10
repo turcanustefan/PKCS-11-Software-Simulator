@@ -2,11 +2,15 @@
 #define H_SERVER_PKCS
 
 #include "SlotList.h"
+#include <openssl\aes.h>
+#include <openssl\rsa.h>
 #include <time.h>
 #include <vector>
 
 struct ServerPKCS
 {
+	
+
 	CK_INFO serverInfo;
 	SlotList* slotList;
 	CK_ULONG sessionCounter;
@@ -19,7 +23,7 @@ struct ServerPKCS
 	~ServerPKCS();
 
 	/* Singleton */
-	
+
 	static CK_RV C_CreateInstance();
 	static CK_RV C_GetInstance(ServerPKCS*& pInfo);
 	static CK_RV C_DeleteInstance();
@@ -62,18 +66,27 @@ struct ServerPKCS
 	CK_RV C_FindObjectsFinal(CK_SESSION_HANDLE hSession);
 
 	/* Encryption and Decryption */
+	CK_RV ServerPKCS::C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR  pMechanism, CK_OBJECT_HANDLE hKey);
 
-	/* Message Digesting */
+	CK_RV ServerPKCS::C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData, CK_ULONG_PTR pulEncryptedDataLen);
 
-	/* Signing and MACing */
+	CK_RV ServerPKCS::C_EncryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart, CK_ULONG ulPartLen, CK_BYTE_PTR pEncryptedPart, CK_ULONG_PTR pulEncryptedPartLen);
 
-	/* Verifying Signatures and MACs */
+	CK_RV ServerPKCS::C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pLastEncryptedPart, CK_ULONG_PTR pulLastEncryptedPartLen);
 
-	/* Dual-function Cryptographic Operations */
+	CK_RV C_DecryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR  pMechanism, CK_OBJECT_HANDLE  hKey);
+	CK_RV C_Decrypt	(CK_SESSION_HANDLE hSession,CK_BYTE_PTR pEncryptedData,CK_ULONG ulEncryptedDataLen,	CK_BYTE_PTR pData,CK_ULONG_PTR pulDataLen);
+		/* Message Digesting */
 
-	/* Key Management */
+		/* Signing and MACing */
 
-	CK_RV C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phKey);
+		/* Verifying Signatures and MACs */
+
+		/* Dual-function Cryptographic Operations */
+
+		/* Key Management */
+
+		CK_RV C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phKey);
 	CK_RV C_GenerateKeyPair(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_ATTRIBUTE_PTR pPublicKeyTemplate, CK_ULONG ulPublicKeyAttributeCount, CK_ATTRIBUTE_PTR pPrivateKeyTemplate, CK_ULONG ulPrivateKeyAttributeCount, CK_OBJECT_HANDLE_PTR phPublicKey, CK_OBJECT_HANDLE_PTR phPrivateKey);
 
 	/* Random Number Generation */
