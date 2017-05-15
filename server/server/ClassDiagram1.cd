@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Struct Name="Token">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABACAAIAAAAAEgAQAIQAAQAgEAAAgQAZCAA=</HashCode>
+      <FileName>Token.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="Session">
+    <Position X="2" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAACAAAAQAAAAAAAQAAAAgAAAgAAAAAAAAAAAA=</HashCode>
+      <FileName>Session.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="SlotList">
+    <Position X="3.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAACAQAAAwgAAAAEgAAAACAAABAAAAAAAAAAAA=</HashCode>
+      <FileName>SlotList.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="ServerPKCS">
+    <Position X="5" Y="0.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEA2ACQAQiEGCAAAIgAOkcAICgAAQmEIAgEAYEQ=</HashCode>
+      <FileName>ServerPKCS.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
